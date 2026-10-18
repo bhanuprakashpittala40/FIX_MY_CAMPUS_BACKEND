@@ -430,7 +430,7 @@ router.patch('/:id/status', authenticate, async (req: AuthenticatedRequest, res:
       }
     } else if (user.role === 'MAINTENANCE') {
       // Technicians can accept (IN_PROGRESS), put ON_HOLD, or mark RESOLVED
-      if (complaint.assignedToId !== user.id && user.role !== 'ADMIN') {
+      if (complaint.assignedToId !== user.id) {
         res.status(403).json({ error: 'You are not assigned to this complaint' });
         return;
       }
