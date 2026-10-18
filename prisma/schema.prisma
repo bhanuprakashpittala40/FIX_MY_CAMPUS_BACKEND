@@ -1,0 +1,147 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                  String             @id @default(uuid())
+  email               String             @unique
+  password            String
+  name                String
+  role                String             @default("STUDENT") // STUDENT, FACULTY, MAINTENANCE, ADMIN
+  department          String?
+  phone               String?
+  avatarUrl           String?
+  isActive            Boolean            @default(true)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  complaintsSubmitted Complaint[]        @relation("SubmittedComplaints")
+  complaintsAssigned  Complaint[]        @relation("AssignedComplaints")
+  comments            ComplaintComment[]
+  notifications       Notification[]
+  activities          ComplaintActivity[]
+}
+
+model Building {
+  id         String      @id @default(uuid())
+  name       String
+  code       String      @unique
+  zone       String
+  floors     Int         @default(3)
+  isCritical Boolean     @default(false)
+  isActive   Boolean     @default(true)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  complaints Complaint[]
+}
+
+model Category {
+  id           String      @id @default(uuid())
+  name         String      @unique
+  slug         String      @unique
+  description  String?
+  icon         String?     @default("Wrench")
+  slaHours     Int         @default(48)
+  displayOrder Int         @default(0)
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  complaints   Complaint[]
+}
+
+model Complaint {
+  id                  String             @id @default(uuid())
+  ticketNumber        String             @unique
+  title               String
+  description         String
+  locationDetails     String
+  status              String             @default("SUBMITTED") // SUBMITTED, UNDER_REVIEW, ASSIGNED, IN_PROGRESS, ON_HOLD, RESOLVED, CLOSED, REJECTED, REOPENED
+  priority            String             @default("MEDIUM")    // CRITICAL, HIGH, MEDIUM, LOW
+  calculatedScore     Float              @default(0)
+  safetyRisk          String             @default("NONE")      // IMMEDIATE_DANGER, HAZARD, NONE
+  severity            String             @default("MODERATE")  // CATASTROPHIC, MAJOR, MODERATE, MINOR
+  affectedCount       String             @default("INDIVIDUAL")// CAMPUS_WIDE, BUILDING_WIDE, GROUP, INDIVIDUAL
+  locationImpact      Boolean            @default(false)
+  slaDeadline         DateTime
+  isOverdue           Boolean            @default(false)
+  images              String             @default("[]") // JSON string array of URLs
+  resolutionImages    String             @default("[]") // JSON string array of URLs
+  resolutionNotes     String?
+  holdReason          String?
+  expectedRestartDate DateTime?
+  rejectionReason     String?
+  reopenReason        String?
+
+  submittedById       String
+  submittedBy         User               @relation("SubmittedComplaints", fields: [submittedById], references: [id])
+
+  assignedToId        String?
+  assignedTo          User?              @relation("AssignedComplaints", fields: [assignedToId], references: [id])
+
+  buildingId          String
+  building            Building           @relation(fields: [buildingId], references: [id])
+
+  categoryId          String
+  category            Category           @relation(fields: [categoryId], references: [id])
+
+  resolvedAt          DateTime?
+  closedAt            DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  activities          ComplaintActivity[]
+  comments            ComplaintComment[]
+  notifications       Notification[]
+}
+
+model ComplaintActivity {
+  id             String      @id @default(uuid())
+  complaintId    String
+  complaint      Complaint   @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  actorId        String?
+  actor          User?       @relation(fields: [actorId], references: [id])
+  actorName      String
+  actorRole      String
+  previousStatus String?
+  newStatus      String
+  action         String      // STATUS_CHANGE, ASSIGNED, PRIORITY_UPDATE, COMMENT, WORK_NOTE, REOPENED
+  comments       String?
+  createdAt      DateTime    @default(now())
+}
+
+model ComplaintComment {
+  id          String    @id @default(uuid())
+  complaintId String
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  comment     String
+  createdAt   DateTime  @default(now())
+}
+
+model Notification {
+  id          String     @id @default(uuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  message     String
+  type        String     @default("STATUS_UPDATE")
+  read        Boolean    @default(false)
+  complaintId String?
+  complaint   Complaint? @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  createdAt   DateTime   @default(now())
+}
+
+model PriorityRuleConfig {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String   // JSON string configuration
+  updatedAt DateTime @updatedAt
+}

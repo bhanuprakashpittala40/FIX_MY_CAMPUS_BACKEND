@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.*
+
+# Database
+prisma/dev.db
+prisma/dev.db-journal
+dev.db
+dev.db-journal
+*.sqlite
+*.db
+
+# Uploads
+uploads/*
+!uploads/.gitkeep
+
+# Build
+dist/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/
