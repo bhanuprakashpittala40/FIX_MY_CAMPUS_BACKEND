@@ -1,5 +1,5 @@
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -45,7 +45,7 @@ model Category {
   id           String      @id @default(uuid())
   name         String      @unique
   slug         String      @unique
-  description  String?
+  description  String?     @db.Text
   icon         String?     @default("Wrench")
   slaHours     Int         @default(48)
   displayOrder Int         @default(0)
@@ -60,7 +60,7 @@ model Complaint {
   id                  String             @id @default(uuid())
   ticketNumber        String             @unique
   title               String
-  description         String
+  description         String             @db.Text
   locationDetails     String
   status              String             @default("SUBMITTED") // SUBMITTED, UNDER_REVIEW, ASSIGNED, IN_PROGRESS, ON_HOLD, RESOLVED, CLOSED, REJECTED, REOPENED
   priority            String             @default("MEDIUM")    // CRITICAL, HIGH, MEDIUM, LOW
@@ -71,13 +71,13 @@ model Complaint {
   locationImpact      Boolean            @default(false)
   slaDeadline         DateTime
   isOverdue           Boolean            @default(false)
-  images              String             @default("[]") // JSON string array of URLs
-  resolutionImages    String             @default("[]") // JSON string array of URLs
-  resolutionNotes     String?
-  holdReason          String?
+  images              String             @default("[]") @db.Text
+  resolutionImages    String             @default("[]") @db.Text
+  resolutionNotes     String?            @db.Text
+  holdReason          String?            @db.Text
   expectedRestartDate DateTime?
-  rejectionReason     String?
-  reopenReason        String?
+  rejectionReason     String?            @db.Text
+  reopenReason        String?            @db.Text
 
   submittedById       String
   submittedBy         User               @relation("SubmittedComplaints", fields: [submittedById], references: [id])
@@ -111,8 +111,8 @@ model ComplaintActivity {
   actorRole      String
   previousStatus String?
   newStatus      String
-  action         String      // STATUS_CHANGE, ASSIGNED, PRIORITY_UPDATE, COMMENT, WORK_NOTE, REOPENED
-  comments       String?
+  action         String
+  comments       String?     @db.Text
   createdAt      DateTime    @default(now())
 }
 
@@ -122,7 +122,7 @@ model ComplaintComment {
   complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
   userId      String
   user        User      @relation(fields: [userId], references: [id])
-  comment     String
+  comment     String    @db.Text
   createdAt   DateTime  @default(now())
 }
 
@@ -131,7 +131,7 @@ model Notification {
   userId      String
   user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   title       String
-  message     String
+  message     String     @db.Text
   type        String     @default("STATUS_UPDATE")
   read        Boolean    @default(false)
   complaintId String?
@@ -142,6 +142,6 @@ model Notification {
 model PriorityRuleConfig {
   id        String   @id @default(uuid())
   key       String   @unique
-  value     String   // JSON string configuration
+  value     String   @db.Text
   updatedAt DateTime @updatedAt
 }
