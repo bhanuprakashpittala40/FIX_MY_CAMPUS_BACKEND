@@ -10,7 +10,8 @@
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "seed": "tsx src/prisma/seed.ts",
-    "test": "tsx src/tests/verifyBackend.ts"
+    "test": "tsx src/tests/verifyBackend.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
